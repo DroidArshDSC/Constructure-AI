@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: constructure-backend
+    env: docker
+    repo: https://github.com/<YOUR_USERNAME>/<YOUR_REPO_NAME>
+    branch: main
+    plan: free
+    autoDeploy: true
+
+    # Where the Dockerfile is located
+    dockerfilePath: backend/Dockerfile
+
+    # The folder to use as Docker build context
+    buildContext: backend
+
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+    disk:
+      name: chroma-storage
+      mountPath: /app/chroma
+      sizeGB: 1
