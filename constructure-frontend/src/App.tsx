@@ -1,7 +1,10 @@
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// ----------------------------------------
+// FIXED: remove trailing slashes automatically
+// ----------------------------------------
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse bg-slate-800/60 rounded ${className}`} />;
@@ -31,9 +34,7 @@ export default function App() {
     }
 
     setUploading(true);
-    setUploadStatus(
-      "⏳ Upload started… Extracting text & chunking (may take 1–3 minutes)…"
-    );
+    setUploadStatus("⏳ Upload started… Extracting text & chunking…");
 
     toast.dismiss();
     const loadingToast = toast.loading(
@@ -41,12 +42,11 @@ export default function App() {
     );
 
     const form = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      form.append("files", files[i]);
-    }
+    Array.from(files).forEach((file) => form.append("files", file));
 
     try {
-      const res = await fetch(`${API_URL}/ingest/`, {
+      // ------------ FIXED path: no trailing slash ------------
+      const res = await fetch(`${API_URL}/ingest`, {
         method: "POST",
         body: form,
       });
@@ -78,7 +78,7 @@ export default function App() {
   };
 
   // ----------------------------------------
-  // 2. Chat / Ask a Question
+  // 2. Chat / Ask a question
   // ----------------------------------------
   const askQuestion = async () => {
     if (!question.trim()) return;
@@ -87,7 +87,8 @@ export default function App() {
     setAnswer(null);
 
     try {
-      const res = await fetch(`${API_URL}/chat/`, {
+      // ------------ FIXED path ------------
+      const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: question }),
@@ -111,6 +112,7 @@ export default function App() {
     setExtraction(null);
 
     try {
+      // ------------ FIXED path ------------
       const res = await fetch(`${API_URL}/extract/door-schedule`, {
         method: "POST",
       });
@@ -133,10 +135,7 @@ export default function App() {
       <header className="border-b border-slate-800 px-10 py-6">
         <h1 className="text-2xl font-bold">Constructure AI — RAG Sandbox</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Backend:{" "}
-          <span className="font-mono">
-            {API_URL || "VITE_API_URL not configured"}
-          </span>
+          Backend: <span className="font-mono">{API_URL}</span>
         </p>
       </header>
 
@@ -148,7 +147,7 @@ export default function App() {
         <section className="border border-slate-800 rounded-xl p-6 bg-slate-900/40">
           <h2 className="text-xl font-semibold mb-3">1. Ingest PDFs</h2>
           <p className="text-sm mb-4 text-slate-400">
-            Upload document PDFs. Large drawings (e.g., Attachment 7) may take 1–3 minutes.
+            Upload project PDFs. Heavy drawings (like Attachment 7) may take time.
           </p>
 
           {/* Hidden input */}
@@ -161,8 +160,7 @@ export default function App() {
           />
 
           <div className="flex items-center gap-3">
-
-            {/* Choose Files Button */}
+            {/* Choose Files */}
             <button
               onClick={() => document.getElementById("fileInput")!.click()}
               className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium"
@@ -170,7 +168,7 @@ export default function App() {
               Choose Files
             </button>
 
-            {/* Upload Button */}
+            {/* Upload */}
             <button
               onClick={uploadFiles}
               disabled={uploading}
@@ -191,17 +189,15 @@ export default function App() {
             </p>
           )}
 
-          {/* Upload Status */}
+          {/* Upload status text */}
           {uploadStatus && (
             <p className="text-sm text-slate-300 mt-2">{uploadStatus}</p>
           )}
 
-          {/* Upload History */}
+          {/* Upload history */}
           {fileHistory.length > 0 && (
             <div className="mt-4 p-3 bg-slate-900 border border-slate-800 rounded-lg">
-              <h3 className="text-sm font-semibold mb-2">
-                Uploaded files this session
-              </h3>
+              <h3 className="text-sm font-semibold mb-2">Uploaded this session</h3>
               <ul className="text-xs text-slate-300 space-y-1">
                 {fileHistory.map((name, idx) => (
                   <li key={idx}>• {name}</li>
@@ -212,7 +208,7 @@ export default function App() {
         </section>
 
         {/* ------------------------ */}
-        {/* 2. Chat / Q&A */}
+        {/* 2. Chat */}
         {/* ------------------------ */}
         <section className="border border-slate-800 rounded-xl p-6 bg-slate-900/40">
           <h2 className="text-xl font-semibold mb-3">2. Ask a Question</h2>
@@ -257,7 +253,7 @@ export default function App() {
         <section className="border border-slate-800 rounded-xl p-6 bg-slate-900/40">
           <h2 className="text-xl font-semibold mb-3">3. Door Schedule Extraction</h2>
           <p className="text-sm text-slate-400 mb-3">
-            Structured extraction for door schedules (works best locally).
+            Extract a structured door schedule table.
           </p>
 
           <button
